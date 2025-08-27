@@ -41,14 +41,17 @@ const ReportThreatForm: React.FC = () => {
   const [instrumentValue, setInstrumentValue] = useState('');
   const [isNewThreatModalOpen, setIsNewThreatModalOpen] = useState(false);
   const [isExistingThreatModalOpen, setIsExistingThreatModalOpen] = useState(false);
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [formData, setFormData] = useState<ReportFormInputs | null>(null);
   const queryClient = useQueryClient();
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<ReportFormInputs>({
     resolver: zodResolver(reportSchema),
   });
@@ -62,15 +65,39 @@ const ReportThreatForm: React.FC = () => {
           }
           return res.json();
         })
-        .then((data) => setSuggestions(data))
+        .then((data) => {
+          setSuggestions(data);
+          setIsDropdownVisible(data.length > 0);
+        })
         .catch(error => {
           console.error('Failed to fetch suggestions:', error);
           setSuggestions([]);
+          setIsDropdownVisible(false);
         });
     } else {
       setSuggestions([]);
+      setIsDropdownVisible(false);
     }
   }, [instrumentValue]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownVisible(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSuggestionClick = (suggestion: Suggestion) => {
+    setInstrumentValue(suggestion.name);
+    setValue('instrument', suggestion.name);
+    setIsDropdownVisible(false);
+  };
 
   const onSubmit = (data: ReportFormInputs) => {
     setFormData(data);
@@ -127,7 +154,7 @@ const ReportThreatForm: React.FC = () => {
         </div>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
+        <div className="relative">
           <Input
             id="instrument"
             label="Threat Instrument (e.g., domain, phone number, email)"
@@ -136,13 +163,22 @@ const ReportThreatForm: React.FC = () => {
             register={register}
             errors={errors}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInstrumentValue(e.target.value)}
-            list="instrument-suggestions"
           />
-          <datalist id="instrument-suggestions">
-            {suggestions.map((suggestion) => (
-              <option key={suggestion.id} value={suggestion.name} />
-            ))}
-          </datalist>
+          {isDropdownVisible && suggestions.length > 0 && (
+            <div ref={dropdownRef} className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+              <ul>
+                {suggestions.map((suggestion) => (
+                  <li
+                    key={suggestion.id}
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <div className="mb-4">
           <label htmlFor="type" className="block text-gray-700 text-sm font-bold mb-2">Threat Type</label>
