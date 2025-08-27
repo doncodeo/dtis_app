@@ -10,14 +10,8 @@ import Button from '@/components/common/Button';
 import { useRouter } from 'next/navigation';
 import { createArticle } from '@/api/articles';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
 import { useAuthStore } from '@/store/authStore';
-
-const ReactQuillNoSSR = dynamic(
-  () => import('react-quill'),
-  { ssr: false }
-);
+import TiptapEditor from '@/components/common/TiptapEditor'; // Import the new Tiptap editor
 
 const articleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100, 'Title cannot exceed 100 characters'),
@@ -31,6 +25,7 @@ const CreateArticleForm: React.FC = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState('');
+  const [contentError, setContentError] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const {
@@ -38,18 +33,30 @@ const CreateArticleForm: React.FC = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    trigger,
   } = useForm<ArticleFormInputs>({
     resolver: zodResolver(articleSchema),
   });
 
+  const validateContent = () => {
+    // Basic validation: check if content is empty or too short.
+    // Tiptap's empty state is '<p></p>', so we check against that and length.
+    if (!content || content === '<p></p>' || content.length < 50) {
+      setContentError('Content must be at least 50 characters long.');
+      return false;
+    }
+    setContentError(null);
+    return true;
+  };
+
   const onSubmit = async (data: ArticleFormInputs) => {
-    if (!user) {
-      setMessage({ type: 'error', text: 'You must be logged in to create an article.' });
+    const isContentValid = validateContent();
+    if (!isContentValid) {
       return;
     }
 
-    if (content.length < 50) {
-      setMessage({ type: 'error', text: 'Content must be at least 50 characters long.' });
+    if (!user) {
+      setMessage({ type: 'error', text: 'You must be logged in to create an article.' });
       return;
     }
 
@@ -68,7 +75,7 @@ const CreateArticleForm: React.FC = () => {
       reset();
       setContent('');
       setTimeout(() => router.push('/articles'), 2000);
-    } catch (error: any) {
+    } catch (error: any) => {
       console.error('Article creation error:', error);
       const errorMessage = error.response?.data?.message || 'Failed to create article. Please try again.';
       setMessage({ type: 'error', text: errorMessage });
@@ -85,7 +92,7 @@ const CreateArticleForm: React.FC = () => {
           {message.text}
         </div>
       )}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Input
           id="title"
           label="Article Title"
@@ -104,15 +111,21 @@ const CreateArticleForm: React.FC = () => {
         />
         <div>
           <label htmlFor="content" className="block text-gray-700 text-sm font-bold mb-2">Content</label>
-          <ReactQuillNoSSR
-            theme="snow"
-            value={content}
-            onChange={setContent}
-            className="rounded-lg shadow-sm"
+          <TiptapEditor
+            content={content}
+            onChange={(newContent) => {
+              setContent(newContent);
+              if (contentError) {
+                validateContent(); // Re-validate on change if there was an error
+              }
+            }}
+            onBlur={() => {
+              validateContent(); // Validate on blur
+            }}
           />
-          {content.length < 50 && (
+          {contentError && (
             <p className="text-red-500 text-xs italic mt-1">
-              Content must be at least 50 characters.
+              {contentError}
             </p>
           )}
         </div>
