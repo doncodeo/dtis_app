@@ -12,6 +12,7 @@ export default function Home() {
       </p>
       <div className="mt-8">
         {/* Placeholder for a relevant image or icon */}
+        {/* Placeholder for a relevant image or icon */}
         <Image
           src="https://placehold.co/150x150/e0e7ff/3f51b5?text=Secure" // Placeholder image for security theme
           alt="Security Icon"
@@ -20,11 +21,27 @@ export default function Home() {
           className="rounded-full shadow-lg"
         />
       </div>
-      <div className="mt-8 flex space-x-4">
-        <a href="/reports" className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-md hover:bg-blue-700 transition-colors">
+
+      {/* Stats Section */}
+      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 text-center max-w-2xl">
+        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+          <h3 className="text-3xl font-bold text-blue-600">1,234</h3>
+          <p className="text-gray-500 mt-1">Total Threats Reported</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+          <h3 className="text-3xl font-bold text-green-600">567</h3>
+          <p className="text-gray-500 mt-1">Verified Threats</p>
+        </div>
+      </div>
+
+      <div className="mt-10 flex flex-wrap justify-center gap-4">
+        <a href="/report-threat" className="px-8 py-4 bg-red-600 text-white font-bold rounded-full shadow-lg hover:bg-red-700 transition-transform transform hover:scale-105">
+          Report a Threat
+        </a>
+        <a href="/reports" className="px-8 py-4 bg-blue-600 text-white font-bold rounded-full shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
           View Threats
         </a>
-        <a href="/auth/register" className="px-6 py-3 border border-blue-600 text-blue-600 font-semibold rounded-full shadow-md hover:bg-blue-50 transition-colors">
+        <a href="/auth/register" className="px-8 py-4 border-2 border-blue-600 text-blue-600 font-bold rounded-full shadow-lg hover:bg-blue-50 transition-transform transform hover:scale-105">
           Join Us
         </a>
       </div>

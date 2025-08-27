@@ -9,6 +9,8 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   register: UseFormRegister<any>; // Use any or a specific type for FieldValues
   errors: FieldErrors<FieldValues>;
   placeholder?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  list?: string;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -28,8 +30,9 @@ const Input: React.FC<InputProps> = ({
       <input
         id={id}
         type={type}
-        {...register(id)}
+        {...register(id, { onChange })}
         placeholder={placeholder || `Enter ${label.toLowerCase()}`}
+        list={list}
         className={`shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200
           ${errors[id] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
         {...rest}

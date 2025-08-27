@@ -1,17 +1,19 @@
 // src/components/reports/ReportThreatForm.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
+import Modal from '@/components/common/Modal';
 import { reportThreat } from '@/api/reports';
 import { WatchlistCategory } from '@/types/auth';
 import { useRouter } from 'next/navigation';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import { THREAT_TYPES } from '@/constants/threatTypes';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Define the Zod schema for validation
 const reportSchema = z.object({
@@ -30,38 +32,70 @@ const ReportThreatForm: React.FC = () => {
   useAuthRedirect(); // Protect this route
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [instrumentValue, setInstrumentValue] = useState('');
+  const [isNewThreatModalOpen, setIsNewThreatModalOpen] = useState(false);
+  const [isExistingThreatModalOpen, setIsExistingThreatModalOpen] = useState(false);
+  const [formData, setFormData] = useState<ReportFormInputs | null>(null);
+  const queryClient = useQueryClient();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<ReportFormInputs>({
     resolver: zodResolver(reportSchema),
   });
 
-  const onSubmit = async (data: ReportFormInputs) => {
+  useEffect(() => {
+    if (instrumentValue.length > 2) {
+      fetch(`/api/threats/autocomplete?query=${instrumentValue}`)
+        .then((res) => res.json())
+        .then((data) => setSuggestions(data));
+    } else {
+      setSuggestions([]);
+    }
+  }, [instrumentValue]);
+
+  const onSubmit = (data: ReportFormInputs) => {
+    setFormData(data);
+    // In a real app, you'd fetch from the DB to check for existence
+    const existingThreat = suggestions.find(s => s.name === data.instrument);
+    if (existingThreat) {
+      setIsExistingThreatModalOpen(true);
+    } else {
+      setIsNewThreatModalOpen(true);
+    }
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!formData) return;
+
     setLoading(true);
     setMessage(null);
     try {
-      // Split aliases string into an array, if present
-      const aliasesArray = data.aliases ? data.aliases.split(',').map(alias => alias.trim()) : undefined;
+      const aliasesArray = formData.aliases ? formData.aliases.split(',').map(alias => alias.trim()) : undefined;
 
       const responseMessage = await reportThreat({
-        instrument: data.instrument,
-        type: data.type as WatchlistCategory,
-        description: data.description,
-        aliases: aliasesArray
+        instrument: formData.instrument,
+        type: formData.type as WatchlistCategory,
+        description: formData.description,
+        aliases: aliasesArray,
       });
 
       setMessage({ type: 'success', text: responseMessage || 'Threat reported successfully!' });
-      reset(); // Clear form after successful submission
+      reset();
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
     } catch (error: any) {
       console.error('Report submission error:', error);
       const errorMessage = error.response?.data?.message || 'Failed to submit report. Please try again.';
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
+      setIsNewThreatModalOpen(false);
+      setIsExistingThreatModalOpen(false);
     }
   };
 
@@ -77,14 +111,23 @@ const ReportThreatForm: React.FC = () => {
         </div>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input
-          id="instrument"
-          label="Threat Instrument (e.g., domain, phone number, email)"
-          type="text"
-          placeholder="e.g., example.com"
-          register={register}
-          errors={errors}
-        />
+        <div>
+          <Input
+            id="instrument"
+            label="Threat Instrument (e.g., domain, phone number, email)"
+            type="text"
+            placeholder="e.g., example.com"
+            register={register}
+            errors={errors}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInstrumentValue(e.target.value)}
+            list="instrument-suggestions"
+          />
+          <datalist id="instrument-suggestions">
+            {suggestions.map((suggestion) => (
+              <option key={suggestion.id} value={suggestion.name} />
+            ))}
+          </datalist>
+        </div>
         <div className="mb-4">
           <label htmlFor="type" className="block text-gray-700 text-sm font-bold mb-2">Threat Type</label>
           <select
@@ -132,6 +175,38 @@ const ReportThreatForm: React.FC = () => {
           Submit Report
         </Button>
       </form>
+
+      {/* New Threat Confirmation Modal */}
+      <Modal
+        isOpen={isNewThreatModalOpen}
+        onClose={() => setIsNewThreatModalOpen(false)}
+        title="Confirm New Threat Report"
+        footer={
+          <Button onClick={handleConfirmSubmit} isLoading={loading}>
+            Confirm and Report
+          </Button>
+        }
+      >
+        <p>
+          You are about to report a new threat. Please be aware that submitting false or misleading information is a serious offense and may have legal consequences.
+        </p>
+      </Modal>
+
+      {/* Existing Threat Confirmation Modal */}
+      <Modal
+        isOpen={isExistingThreatModalOpen}
+        onClose={() => setIsExistingThreatModalOpen(false)}
+        title="Confirm Report on Existing Threat"
+        footer={
+          <Button onClick={handleConfirmSubmit} isLoading={loading}>
+            Confirm and Add Report
+          </Button>
+        }
+      >
+        <p>
+          A similar threat has already been reported. Your report will be added as additional information. Please ensure your report is accurate and not submitted for malicious reasons.
+        </p>
+      </Modal>
     </div>
   );
 };
