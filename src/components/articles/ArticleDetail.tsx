@@ -4,7 +4,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getArticleById } from '@/api/articles';
-import { Article } from '@/types/auth';
 import Link from 'next/link';
 
 interface ArticleDetailProps {

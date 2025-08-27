@@ -10,10 +10,10 @@ import Button from '@/components/common/Button';
 import Modal from '@/components/common/Modal';
 import { reportThreat } from '@/api/reports';
 import { WatchlistCategory } from '@/types/auth';
-import { useRouter } from 'next/navigation';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import { THREAT_TYPES } from '@/constants/threatTypes';
 import { useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 
 // Define the Zod schema for validation
 const reportSchema = z.object({
@@ -28,11 +28,16 @@ const reportSchema = z.object({
 // Infer the type from the schema
 type ReportFormInputs = z.infer<typeof reportSchema>;
 
+interface Suggestion {
+  id: number;
+  name: string;
+}
+
 const ReportThreatForm: React.FC = () => {
   useAuthRedirect(); // Protect this route
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [instrumentValue, setInstrumentValue] = useState('');
   const [isNewThreatModalOpen, setIsNewThreatModalOpen] = useState(false);
   const [isExistingThreatModalOpen, setIsExistingThreatModalOpen] = useState(false);
@@ -44,7 +49,6 @@ const ReportThreatForm: React.FC = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    setValue,
   } = useForm<ReportFormInputs>({
     resolver: zodResolver(reportSchema),
   });
@@ -52,8 +56,17 @@ const ReportThreatForm: React.FC = () => {
   useEffect(() => {
     if (instrumentValue.length > 2) {
       fetch(`/api/threats/autocomplete?query=${instrumentValue}`)
-        .then((res) => res.json())
-        .then((data) => setSuggestions(data));
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return res.json();
+        })
+        .then((data) => setSuggestions(data))
+        .catch(error => {
+          console.error('Failed to fetch suggestions:', error);
+          setSuggestions([]);
+        });
     } else {
       setSuggestions([]);
     }
@@ -88,9 +101,12 @@ const ReportThreatForm: React.FC = () => {
       setMessage({ type: 'success', text: responseMessage || 'Threat reported successfully!' });
       reset();
       queryClient.invalidateQueries({ queryKey: ['reports'] });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Report submission error:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to submit report. Please try again.';
+      let errorMessage = 'Failed to submit report. Please try again.';
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);

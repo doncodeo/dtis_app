@@ -6,7 +6,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
   type?: string;
-  register: UseFormRegister<any>; // Use any or a specific type for FieldValues
+  register: UseFormRegister<FieldValues>;
   errors: FieldErrors<FieldValues>;
   placeholder?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;

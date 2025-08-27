@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 
 const threats = [
   { id: 1, name: 'example.com' },
@@ -7,16 +7,17 @@ const threats = [
   { id: 4, name: 'malware-domain.io' },
 ];
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { query } = req.query;
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get('query');
 
   if (typeof query !== 'string') {
-    return res.status(400).json({ message: 'Query must be a string' });
+    return NextResponse.json({ message: 'Query must be a string' }, { status: 400 });
   }
 
   const filteredThreats = threats.filter((threat) =>
     threat.name.toLowerCase().includes(query.toLowerCase())
   );
 
-  res.status(200).json(filteredThreats);
+  return NextResponse.json(filteredThreats);
 }

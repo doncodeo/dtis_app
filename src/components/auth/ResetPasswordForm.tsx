@@ -10,6 +10,7 @@ import Button from '@/components/common/Button';
 import { resetPassword } from '@/api/auth'; // Import the resetPassword API call
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AxiosError } from 'axios';
 
 // Define the Zod schema for validation
 const resetPasswordSchema = z.object({
@@ -52,9 +53,12 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
       setTimeout(() => {
         router.push('/auth/login'); // Redirect to login page after a short delay
       }, 2000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Reset password error:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to reset password. The link might be invalid or expired.';
+      let errorMessage = 'Failed to reset password. The link might be invalid or expired.';
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);

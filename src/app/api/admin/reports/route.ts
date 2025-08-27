@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 
 const reports = [
   { id: 1, instrument: 'example.com', type: 'Phishing Website', description: 'A fake login page for a bank.', status: 'public', reviews: 5 },
@@ -7,13 +7,14 @@ const reports = [
   { id: 4, instrument: 'malware.com', type: 'Malware Distribution', description: 'A site that downloads a virus.', status: 'public', reviews: 1 },
 ];
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { category } = req.query;
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const category = searchParams.get('category');
 
   if (category) {
     const filteredReports = reports.filter((report) => report.type === category);
-    return res.status(200).json(filteredReports);
+    return NextResponse.json(filteredReports);
   }
 
-  res.status(200).json(reports);
+  return NextResponse.json(reports);
 }

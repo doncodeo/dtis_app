@@ -11,6 +11,7 @@ import { loginUser } from '@/api/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore'; // Import the auth store
+import { AxiosError } from 'axios';
 
 // Define the Zod schema for validation
 const loginSchema = z.object({
@@ -45,9 +46,12 @@ const LoginForm: React.FC = () => {
       setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
       reset(); // Clear form
       router.push('/dashboard'); // Redirect to dashboard after successful login
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login error:', error);
-      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      let errorMessage = 'Login failed. Please check your credentials.';
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
@@ -89,7 +93,7 @@ const LoginForm: React.FC = () => {
         </Link>
       </p>
       <p className="mt-2 text-center text-gray-600">
-        Don't have an account?{' '}
+        Don&apos;t have an account?{' '}
         <Link href="/auth/register" className="text-blue-600 hover:underline font-semibold">
           Register here
         </Link>
