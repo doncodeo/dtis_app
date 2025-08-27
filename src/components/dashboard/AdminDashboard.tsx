@@ -1,23 +1,50 @@
 // src/components/dashboard/AdminDashboard.tsx
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAdminRedirect } from '@/hooks/useAdminRedirect';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAdminStats } from '@/api/admin';
 import Link from 'next/link'; // Import Link
 
 const AdminDashboard: React.FC = () => {
   const { userIsAdmin, isLoading } = useAdminRedirect();
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const queryClient = useQueryClient();
 
   // Fetch admin stats using React Query
-  // The query is only enabled if the user is an admin
   const { data: adminStats, isLoading: statsLoading, isError: statsError } = useQuery({
     queryKey: ['adminStats'],
     queryFn: getAdminStats,
-    enabled: userIsAdmin, // Only fetch if user is an admin
-    staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
+    enabled: userIsAdmin,
   });
+
+  // Fetch reports using React Query
+  const { data: reports, isLoading: reportsLoading } = useQuery({
+    queryKey: ['adminReports', selectedCategory],
+    queryFn: async () => {
+      const url = selectedCategory === 'all'
+        ? '/api/admin/reports'
+                : `/api/admin/reports?category=${selectedCategory}`;
+      const res = await fetch(url);
+      return res.json();
+    },
+    enabled: userIsAdmin,
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: (reportId: number) =>
+      fetch(`/api/admin/reports/${reportId}/toggle-status`, {
+        method: 'PUT',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminReports', selectedCategory] });
+    },
+  });
+
+  const handleToggleStatus = (reportId: number) => {
+    toggleStatusMutation.mutate(reportId);
+  };
 
   if (isLoading || statsLoading) {
     return (
@@ -83,6 +110,60 @@ const AdminDashboard: React.FC = () => {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Reports Management Section */}
+      <div className="mt-8">
+        <h3 className="text-2xl font-bold text-center text-gray-800 mb-6">Manage Reports</h3>
+        <div className="mb-4">
+          <label htmlFor="category-filter" className="block text-gray-700 text-sm font-bold mb-2">Filter by Category</label>
+          <select
+            id="category-filter"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+          >
+            <option value="all">All</option>
+            <option value="Phishing Website">Phishing Website</option>
+            <option value="Scam Email">Scam Email</option>
+            <option value="Fraudulent Phone Number">Fraudulent Phone Number</option>
+            <option value="Malware Distribution">Malware Distribution</option>
+          </select>
+        </div>
+        {reportsLoading ? (
+          <p>Loading reports...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instrument</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {reports?.map((report: any) => (
+                  <tr key={report.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">{report.instrument}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{report.type}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{report.status}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleToggleStatus(report.id)}
+                        className="text-blue-600 hover:text-blue-900"
+                        disabled={toggleStatusMutation.isPending}
+                      >
+                        {toggleStatusMutation.isPending ? 'Toggling...' : 'Toggle Status'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
