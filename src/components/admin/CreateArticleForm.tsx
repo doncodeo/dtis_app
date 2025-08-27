@@ -9,7 +9,7 @@ import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { useAdminRedirect } from '@/hooks/useAdminRedirect';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/api/apiClient';
+import { createArticle } from '@/api/articles';
 import Link from 'next/link';
 import dynamic from 'next/dynamic'; // Import dynamic from Next.js
 import 'react-quill/dist/quill.snow.css';
@@ -48,24 +48,30 @@ const CreateArticleForm: React.FC = () => {
   });
 
   const onSubmit = async (data: ArticleFormInputs) => {
-    // Basic validation for content from quill
+    if (!user) {
+      setMessage({ type: 'error', text: 'You must be logged in to create an article.' });
+      return;
+    }
+
     if (content.length < 50) {
       setMessage({ type: 'error', text: 'Content must be at least 50 characters long.' });
       return;
     }
+
     setLoading(true);
     setMessage(null);
+
     try {
-      const response = await apiClient.post('/articles', {
+      await createArticle({
         title: data.title,
         content: content,
-        author: user?.name, // Use the logged-in user's name as the author
+        authorId: user.id,
+        authorName: user.name,
         imageUrl: data.imageUrl || undefined,
       });
-      setMessage({ type: 'success', text: response.data.message || 'Article created successfully!' });
+      setMessage({ type: 'success', text: 'Article created successfully!' });
       reset();
       setContent('');
-      // Optionally redirect after a brief delay
       setTimeout(() => router.push('/articles'), 2000);
     } catch (error: any) {
       console.error('Article creation error:', error);
