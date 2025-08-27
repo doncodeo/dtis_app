@@ -8,6 +8,20 @@ import { useQuery } from '@tanstack/react-query';
 import { getUserStats } from '@/api/auth';
 import Link from 'next/link';
 
+interface RecentReport {
+  _id: string;
+  createdAt: string;
+  instrument: string;
+  description: string;
+  status: string;
+}
+
+interface UserStats {
+  totalReports: number;
+  totalAppeals: number;
+  recentReports: RecentReport[];
+}
+
 const UserDashboard: React.FC = () => {
   // Use the auth redirect hook for route protection
   const { isLoggedIn, isLoading } = useAuthRedirect();
@@ -15,7 +29,7 @@ const UserDashboard: React.FC = () => {
 
   // Fetch user-specific stats using React Query
   // The query will only run if the user is logged in
-  const { data: userStats, isLoading: statsLoading, isError: statsError } = useQuery({
+  const { data: userStats, isLoading: statsLoading, isError: statsError } = useQuery<UserStats>({
     queryKey: ['userStats', user?.id],
     queryFn: getUserStats,
     enabled: isLoggedIn, // This is key: the query is only enabled when the user is logged in
@@ -94,7 +108,7 @@ const UserDashboard: React.FC = () => {
         <h3 className="text-xl font-semibold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Recent Reports</h3>
         <ul className="space-y-4">
           {userStats?.recentReports?.length ? (
-            userStats.recentReports.slice(0, 5).map((report: any) => ( // Use 'any' here to avoid TypeScript issues with nested objects
+            userStats.recentReports.slice(0, 5).map((report: RecentReport) => (
               <li key={report._id} className="bg-white p-4 rounded-lg shadow border border-gray-100">
                 <p className="text-sm text-gray-500">{new Date(report.createdAt).toLocaleDateString()}</p>
                 <p className="text-lg font-semibold text-blue-600">{report.instrument}</p>

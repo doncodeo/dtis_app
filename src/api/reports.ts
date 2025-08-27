@@ -1,6 +1,6 @@
 // src/api/reports.ts
 import apiClient from './apiClient';
-import { Report, GetReportsResponse, CreateWatchlistItemData, WatchlistCategory } from '@/types/auth'; // Using auth.d.ts for now
+import { GetReportsResponse, WatchlistCategory } from '@/types/auth'; // Using auth.d.ts for now
 
 // Interface for query parameters
 interface GetReportsParams {

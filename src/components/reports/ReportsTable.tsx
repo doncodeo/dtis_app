@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getPublicReports } from '@/api/reports';
 import { WatchlistCategory, Report } from '@/types/auth';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/common/Button';
 
@@ -35,7 +35,6 @@ const ClientSideFormattedDate: React.FC<{ dateString: string }> = ({ dateString 
 };
 
 const ReportsTable: React.FC = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
   const [selectedType, setSelectedType] = useState(searchParams.get('type') || 'all');
@@ -88,7 +87,6 @@ const ReportsTable: React.FC = () => {
 
   // After confirming no loading or error, we can safely access data
   const reports = data?.reports || [];
-  const totalReports = data?.totalCount || 0;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg">

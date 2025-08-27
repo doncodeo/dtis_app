@@ -12,6 +12,7 @@ import { createArticle } from '@/api/articles';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import TiptapEditor from '@/components/common/TiptapEditor'; // Import the new Tiptap editor
+import { AxiosError } from 'axios';
 
 const articleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100, 'Title cannot exceed 100 characters'),
@@ -33,7 +34,6 @@ const CreateArticleForm: React.FC = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    trigger,
   } = useForm<ArticleFormInputs>({
     resolver: zodResolver(articleSchema),
   });
@@ -75,9 +75,12 @@ const CreateArticleForm: React.FC = () => {
       reset();
       setContent('');
       setTimeout(() => router.push('/articles'), 2000);
-    } catch (error: any) => {
+    } catch (error) {
       console.error('Article creation error:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to create article. Please try again.';
+      let errorMessage = 'Failed to create article. Please try again.';
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);

@@ -9,6 +9,7 @@ import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { forgotPassword } from '@/api/auth'; // Import the forgotPassword API call
 import Link from 'next/link';
+import { AxiosError } from 'axios';
 
 // Define the Zod schema for validation
 const forgotPasswordSchema = z.object({
@@ -38,9 +39,12 @@ const ForgotPasswordForm: React.FC = () => {
       const responseMessage = await forgotPassword(data);
       setMessage({ type: 'success', text: responseMessage || 'Password reset link sent to your email address.' });
       reset(); // Clear form after successful submission
-    } catch (error: any) {
+    } catch (error) {
       console.error('Forgot password error:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to send reset link. Please try again.';
+      let errorMessage = 'Failed to send reset link. Please try again.';
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
@@ -51,7 +55,7 @@ const ForgotPasswordForm: React.FC = () => {
     <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg mt-8 mb-8">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Forgot Password?</h2>
       <p className="text-center text-gray-600 mb-6">
-        Enter your email address below and we'll send you a link to reset your password.
+        Enter your email address below and we&apos;ll send you a link to reset your password.
       </p>
       {message && (
         <div className={`p-3 rounded-md mb-4 text-center ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

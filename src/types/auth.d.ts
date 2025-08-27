@@ -54,7 +54,7 @@ export interface ResetPasswordData {
 export interface UserStats {
   totalReports: number;
   totalAppeals: number;
-  recentReports: any[]; // Define a more specific type for Report later
+  recentReports: Report[];
 }
 
 // Watchlist Category type

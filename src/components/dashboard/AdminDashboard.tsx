@@ -7,6 +7,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAdminStats } from '@/api/admin';
 import Link from 'next/link'; // Import Link
 
+interface AdminReport {
+  id: number;
+  instrument: string;
+  type: string;
+  status: string;
+}
+
 const AdminDashboard: React.FC = () => {
   const { userIsAdmin, isLoading } = useAdminRedirect();
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -20,7 +27,7 @@ const AdminDashboard: React.FC = () => {
   });
 
   // Fetch reports using React Query
-  const { data: reports, isLoading: reportsLoading } = useQuery({
+  const { data: reports, isLoading: reportsLoading } = useQuery<AdminReport[]>({
     queryKey: ['adminReports', selectedCategory],
     queryFn: async () => {
       const url = selectedCategory === 'all'
@@ -144,7 +151,7 @@ const AdminDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {reports?.map((report: any) => (
+                {reports?.map((report: AdminReport) => (
                   <tr key={report.id}>
                     <td className="px-6 py-4 whitespace-nowrap">{report.instrument}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{report.type}</td>

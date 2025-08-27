@@ -9,8 +9,8 @@ import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { registerUser } from '@/api/auth';
 import { RegisterData } from '@/types/auth';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AxiosError } from 'axios';
 
 // Define the Zod schema for validation
 const registerSchema = z.object({
@@ -27,7 +27,6 @@ const registerSchema = z.object({
 type RegisterFormInputs = z.infer<typeof registerSchema>;
 
 const RegisterForm: React.FC = () => {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -53,9 +52,12 @@ const RegisterForm: React.FC = () => {
       reset(); // Clear form after successful submission
       // Optionally redirect to a verification instruction page or login page
       // router.push('/auth/verify-email');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+      let errorMessage = 'Registration failed. Please try again.';
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
