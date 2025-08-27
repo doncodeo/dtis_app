@@ -2,9 +2,29 @@
 
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import React from 'react';
+import Image from '@tiptap/extension-image';
+import YouTube from '@tiptap/extension-youtube';
+import React, { useCallback } from 'react';
 
 const MenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
+  const addImage = useCallback(() => {
+    const url = window.prompt('Enter the URL of the image:');
+    if (url && editor) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  }, [editor]);
+
+  const addYoutubeVideo = useCallback(() => {
+    const url = window.prompt('Enter the YouTube video URL:');
+    if (url && editor) {
+      editor.commands.setYoutubeVideo({
+        src: url,
+        width: 640,
+        height: 480,
+      });
+    }
+  }, [editor]);
+
   if (!editor) {
     return null;
   }
@@ -14,6 +34,8 @@ const MenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
     { action: () => editor.chain().focus().toggleItalic().run(), name: 'italic', isActive: editor.isActive('italic') },
     { action: () => editor.chain().focus().toggleStrike().run(), name: 'strike', isActive: editor.isActive('strike') },
     { action: () => editor.chain().focus().setParagraph().run(), name: 'paragraph', isActive: editor.isActive('paragraph') },
+    { action: addImage, name: 'Add Image' },
+    { action: addYoutubeVideo, name: 'Add Video' },
   ];
 
   return (
@@ -49,6 +71,11 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ content, onChange, onBlur }
         heading: {
           levels: [1, 2, 3],
         },
+      }),
+      Image,
+      YouTube.configure({
+        controls: true,
+        modestBranding: true,
       }),
     ],
     content: content,

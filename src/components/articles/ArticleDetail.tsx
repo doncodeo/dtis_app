@@ -54,9 +54,10 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({ id }) => {
       <p className="text-sm text-gray-500 mb-6">
         By {article.author.name} on {new Date(article.createdAt).toLocaleDateString()}
       </p>
-      <div className="prose max-w-none text-gray-700">
-        <p>{article.content}</p>
-      </div>
+      <div
+        className="prose max-w-none text-gray-700"
+        dangerouslySetInnerHTML={{ __html: article.content }}
+      />
     </div>
   );
 };
