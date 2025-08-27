@@ -27,10 +27,10 @@ interface AuthState {
 
 // Create the Zustand store
 const useAuthStore = create<AuthState>((set) => ({
-  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null, // Initialize from localStorage on client side
-  user: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null, // Initialize user from localStorage
-  isLoggedIn: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false, // Derived from token existence
-  isLoading: true, // Set to true initially, will be false after checking localStorage
+  token: null,
+  user: null,
+  isLoggedIn: false,
+  isLoading: true,
   error: null,
 
   login: (token, user) => {
