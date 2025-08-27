@@ -84,6 +84,7 @@ export interface AdminStats {
 
 // Article types
 export interface Article {
+  imageUrl: any;
   _id: string;
   title: string;
   content: string;

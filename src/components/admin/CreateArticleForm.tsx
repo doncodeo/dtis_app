@@ -21,7 +21,7 @@ const articleSchema = z.object({
 
 type ArticleFormInputs = z.infer<typeof articleSchema>;
 
-const CreateArticleForm: React.FC = () => {
+const CreateArticleForm = () => {
   const { user } = useAuthStore();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
