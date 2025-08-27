@@ -154,7 +154,7 @@ const ReportThreatForm: React.FC = () => {
         </div>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <Input
             id="instrument"
             label="Threat Instrument (e.g., domain, phone number, email)"
@@ -165,7 +165,7 @@ const ReportThreatForm: React.FC = () => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInstrumentValue(e.target.value)}
           />
           {isDropdownVisible && suggestions.length > 0 && (
-            <div ref={dropdownRef} className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+            <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
               <ul>
                 {suggestions.map((suggestion) => (
                   <li
