@@ -20,6 +20,8 @@ const Input: React.FC<InputProps> = ({
   register,
   errors,
   placeholder,
+  onChange,
+  list,
   ...rest
 }) => {
   return (

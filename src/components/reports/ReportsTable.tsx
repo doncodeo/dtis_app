@@ -36,9 +36,9 @@ const ClientSideFormattedDate: React.FC<{ dateString: string }> = ({ dateString 
 
 const ReportsTable: React.FC = () => {
   const searchParams = useSearchParams();
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
-  const [selectedType, setSelectedType] = useState(searchParams.get('type') || 'all');
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [currentPage, setCurrentPage] = useState(Number(searchParams?.get('page') ?? 1));
+  const [selectedType, setSelectedType] = useState(searchParams?.get('type') ?? 'all');
+  const [searchTerm, setSearchTerm] = useState(searchParams?.get('search') ?? '');
 
   // Fetch reports using React Query
   const { data, isLoading, isError, error } = useQuery({
