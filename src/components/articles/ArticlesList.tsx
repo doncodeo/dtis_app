@@ -6,13 +6,13 @@ import { useQuery } from '@tanstack/react-query';
 import { getArticles } from '@/api/articles';
 import { Article } from '@/types/auth';
 import Link from 'next/link';
+import Image from 'next/image'; // Import next/image for optimized images
 
 // Custom component to handle date formatting after hydration
 const ClientSideFormattedDate: React.FC<{ dateString: string }> = ({ dateString }) => {
   const [formattedDate, setFormattedDate] = useState('');
 
   useEffect(() => {
-    // This code only runs on the client after hydration
     setFormattedDate(new Date(dateString).toLocaleDateString());
   }, [dateString]);
 
@@ -23,8 +23,18 @@ const ArticlesList: React.FC = () => {
   const { data: articles, isLoading, isError, error } = useQuery({
     queryKey: ['articles'],
     queryFn: getArticles,
-    staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
+
+  // Helper function to create a plain-text summary
+  const generateSummary = (htmlContent: string, maxLength: number = 150): string => {
+    if (!htmlContent) return '';
+    const plainText = htmlContent.replace(/<[^>]*>?/gm, '');
+    if (plainText.length <= maxLength) {
+      return plainText;
+    }
+    return plainText.substring(0, maxLength) + '...';
+  };
 
   if (isLoading) {
     return (
@@ -54,20 +64,31 @@ const ArticlesList: React.FC = () => {
         Stay informed about the latest cybersecurity threats.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {articles?.length ? (
           articles.map((article: Article) => (
-            <Link key={article._id} href={`/articles/${article._id}`}>
-              <div className="p-6 bg-gray-50 rounded-lg shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer h-full flex flex-col justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{article.title}</h3>
+            <Link key={article._id} href={`/articles/${article._id}`} className="block group">
+              <div className="p-6 bg-gray-50 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                {article.imageUrl && (
+                  <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden">
+                    <Image
+                      src={article.imageUrl}
+                      alt={article.title}
+                      layout="fill"
+                      objectFit="cover"
+                      className="group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col flex-grow">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">{article.title}</h3>
                   <p className="text-sm text-gray-500 mb-3">
                     By {article.author.name} on <ClientSideFormattedDate dateString={article.createdAt} />
                   </p>
-                  <p className="text-gray-600">{article.content.substring(0, 100)}...</p>
-                </div>
-                <div className="mt-4">
-                  <span className="text-blue-600 font-semibold text-sm">Read more &rarr;</span>
+                  <p className="text-gray-600 flex-grow">{generateSummary(article.content)}</p>
+                  <div className="mt-4">
+                    <span className="text-blue-600 font-semibold text-sm">Read more &rarr;</span>
+                  </div>
                 </div>
               </div>
             </Link>
