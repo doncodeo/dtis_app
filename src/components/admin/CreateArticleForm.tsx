@@ -20,7 +20,7 @@ const articleSchema = z.object({
 
 type ArticleFormInputs = z.infer<typeof articleSchema>;
 
-const CreateArticleForm: React.FC = () => {
+const CreateArticleForm = () => {
   const { user } = useAuthStore();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -75,7 +75,7 @@ const CreateArticleForm: React.FC = () => {
       reset();
       setContent('');
       setTimeout(() => router.push('/articles'), 2000);
-    } catch (error: any) => {
+    } catch (error: any) {
       console.error('Article creation error:', error);
       const errorMessage = error.response?.data?.message || 'Failed to create article. Please try again.';
       setMessage({ type: 'error', text: errorMessage });
