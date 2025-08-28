@@ -57,6 +57,11 @@ const ArticlesList: React.FC = () => {
     );
   }
 
+  // Sort articles by creation date in descending order (newest first)
+  const sortedArticles = articles
+    ? [...articles].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    : [];
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">DTIS News & Blog</h2>
@@ -65,8 +70,8 @@ const ArticlesList: React.FC = () => {
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {articles?.length ? (
-          articles.map((article: Article) => (
+        {sortedArticles.length > 0 ? (
+          sortedArticles.map((article: Article) => (
             <Link key={article._id} href={`/articles/${article._id}`} className="block group">
               <div className="p-6 bg-gray-50 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
                 {article.imageUrl && (
