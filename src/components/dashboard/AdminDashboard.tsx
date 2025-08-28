@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useAdminRedirect } from '@/hooks/useAdminRedirect';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAdminStats } from '@/api/admin';
-import { getReportTypes, getAdminReports, toggleReportVisibility } from '@/api/reports';
+import { getReportTypes, getAdminReports, toggleReportVisibility, deleteReportByAdmin } from '@/api/reports';
 import Link from 'next/link';
 
 interface AdminReport {
@@ -16,10 +16,79 @@ interface AdminReport {
   visible: boolean;
 }
 
+import { updateReportByAdmin } from '@/api/reports';
+
+// ... (other imports)
+
+interface EditReportModalProps {
+  report: AdminReport;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSuccess }) => {
+  const [instrument, setInstrument] = useState(report.instrument);
+  const [type, setType] = useState(report.type);
+  const queryClient = useQueryClient();
+
+  const updateMutation = useMutation({
+    mutationFn: (updatedReport: { instrument: string; type: string }) =>
+      updateReportByAdmin(report.id, updatedReport),
+    onSuccess: () => {
+      onSuccess();
+      onClose();
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateMutation.mutate({ instrument, type });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 className="text-lg font-medium leading-6 text-gray-900">Edit Report</h3>
+        <form onSubmit={handleSubmit} className="mt-2">
+          <input
+            type="text"
+            value={instrument}
+            onChange={(e) => setInstrument(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded mt-2"
+          />
+          <input
+            type="text"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded mt-2"
+          />
+          <div className="items-center px-4 py-3">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? 'Updating...' : 'Update'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-2 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard: React.FC = () => {
   const { userIsAdmin, isLoading } = useAdminRedirect();
   const [selectedType, setSelectedType] = useState('all');
   const [instrumentFilter, setInstrumentFilter] = useState('');
+  const [editingReport, setEditingReport] = useState<AdminReport | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch admin stats
@@ -50,8 +119,21 @@ const AdminDashboard: React.FC = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (reportId: number) => deleteReportByAdmin(reportId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminReports', selectedType, instrumentFilter] });
+    },
+  });
+
   const handleToggleVisibility = (reportId: number) => {
     toggleVisibilityMutation.mutate(reportId);
+  };
+
+  const handleDelete = (reportId: number) => {
+    if (window.confirm('Are you sure you want to delete this report?')) {
+      deleteMutation.mutate(reportId);
+    }
   };
 
   if (isLoading || statsLoading) {
@@ -167,10 +249,23 @@ const AdminDashboard: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">{report.type}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{report.status}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{report.visible ? 'Visible' : 'Hidden'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => setEditingReport(report)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(report.id)}
+                        className="ml-4 text-red-600 hover:text-red-900"
+                        disabled={deleteMutation.isPending}
+                      >
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                      </button>
                       <button
                         onClick={() => handleToggleVisibility(report.id)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="ml-4 text-blue-600 hover:text-blue-900"
                         disabled={toggleVisibilityMutation.isPending}
                       >
                         {toggleVisibilityMutation.isPending ? 'Toggling...' : 'Toggle Visibility'}
@@ -183,6 +278,15 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
       </div>
+      {editingReport && (
+        <EditReportModal
+          report={editingReport}
+          onClose={() => setEditingReport(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['adminReports', selectedType, instrumentFilter] });
+          }}
+        />
+      )}
     </div>
   );
 };

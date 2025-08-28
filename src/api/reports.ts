@@ -55,3 +55,28 @@ export const toggleReportVisibility = async (id: number) => {
   const response = await apiClient.patch(`/admin/reports/${id}/visibility`);
   return response.data;
 };
+
+// Interface for updating a report
+interface UpdateReportData {
+  instrument?: string;
+  type?: WatchlistCategory;
+  description?: string;
+}
+
+// User updates their own report
+export const updateReport = async (id: number, data: UpdateReportData): Promise<any> => {
+  const response = await apiClient.put(`/reports/${id}`, data);
+  return response.data;
+};
+
+// Admin updates a report
+export const updateReportByAdmin = async (id: number, data: UpdateReportData): Promise<any> => {
+  const response = await apiClient.put(`/reports/admin/${id}`, data);
+  return response.data;
+};
+
+// Admin deletes a report
+export const deleteReportByAdmin = async (id: number): Promise<any> => {
+  const response = await apiClient.delete(`/reports/admin/${id}`);
+  return response.data;
+};

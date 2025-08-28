@@ -129,26 +129,46 @@ const ReportsTable: React.FC = () => {
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Reported
               </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {reports.length ? (
-              reports.map((report: Report) => (
-                <tr key={report._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:underline cursor-pointer">
-                    <Link href={`/reports/${report._id}`}>{report.instrument}</Link>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {report.type}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                    {report.description}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <ClientSideFormattedDate dateString={report.createdAt} />
-                  </td>
-                </tr>
-              ))
+              reports.map((report: Report) => {
+                // Mock user ID
+                const userId = 'user1';
+                const isOwner = report.reporterId === userId;
+                const now = new Date();
+                const reportDate = new Date(report.createdAt);
+                const hoursDifference = (now.getTime() - reportDate.getTime()) / (1000 * 60 * 60);
+                const canEdit = isOwner && hoursDifference <= 1;
+
+                return (
+                  <tr key={report._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:underline cursor-pointer">
+                      <Link href={`/reports/${report._id}`}>{report.instrument}</Link>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {report.type}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                      {report.description}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <ClientSideFormattedDate dateString={report.createdAt} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {canEdit && (
+                        <Link href={`/reports/${report._id}/edit`} className="text-indigo-600 hover:text-indigo-900">
+                          Edit
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
