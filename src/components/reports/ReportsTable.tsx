@@ -152,9 +152,13 @@ const ReportsTable: React.FC = () => {
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Reported
               </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
+
             {filteredReports.length ? (
               filteredReports.map((report: Report) => (
                 <tr key={report._id} className="hover:bg-gray-50 transition-colors">
@@ -172,6 +176,7 @@ const ReportsTable: React.FC = () => {
                   </td>
                 </tr>
               ))
+
             ) : (
               <tr>
                 <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
