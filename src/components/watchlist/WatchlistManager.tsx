@@ -4,10 +4,10 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getWatchlist, addWatchlistItem, removeWatchlistItem } from '@/api/watchlist';
+import { getReportTypes } from '@/api/reports';
 import { WatchlistCategory } from '@/types/auth';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import Button from '@/components/common/Button';
-import { THREAT_TYPES } from '@/constants/threatTypes';
 
 const WatchlistManager: React.FC = () => {
   useAuthRedirect(); // Protect this route
@@ -20,11 +20,16 @@ const WatchlistManager: React.FC = () => {
     queryFn: getWatchlist,
   });
 
+  // Fetch report types
+  const { data: threatTypes, isLoading: typesLoading } = useQuery<string[]>({
+    queryKey: ['reportTypes'],
+    queryFn: getReportTypes,
+  });
+
   // Mutation for adding a watchlist item
   const addMutation = useMutation({
     mutationFn: addWatchlistItem,
     onSuccess: () => {
-      // Invalidate the watchlist query to refetch fresh data
       queryClient.invalidateQueries({ queryKey: ['watchlist'] });
       setSelectedCategory('');
     },
@@ -34,7 +39,6 @@ const WatchlistManager: React.FC = () => {
   const removeMutation = useMutation({
     mutationFn: removeWatchlistItem,
     onSuccess: () => {
-      // Invalidate the watchlist query to refetch fresh data
       queryClient.invalidateQueries({ queryKey: ['watchlist'] });
     },
   });
@@ -49,7 +53,7 @@ const WatchlistManager: React.FC = () => {
     removeMutation.mutate(id);
   };
 
-  if (isLoading || addMutation.isPending || removeMutation.isPending) {
+  if (isLoading || typesLoading || addMutation.isPending || removeMutation.isPending) {
     return (
       <div className="flex justify-center items-center py-10">
         <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -80,10 +84,11 @@ const WatchlistManager: React.FC = () => {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value as WatchlistCategory)}
-            className="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 border-gray-300"
+            className="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={typesLoading}
           >
             <option value="">-- Select a category --</option>
-            {THREAT_TYPES.map((type) => (
+            {threatTypes?.map((type) => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>

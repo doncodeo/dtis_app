@@ -5,52 +5,53 @@ import React, { useState } from 'react';
 import { useAdminRedirect } from '@/hooks/useAdminRedirect';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAdminStats } from '@/api/admin';
-import Link from 'next/link'; // Import Link
+import { getReportTypes, getAdminReports, toggleReportVisibility } from '@/api/reports';
+import Link from 'next/link';
 
 interface AdminReport {
   id: number;
   instrument: string;
   type: string;
   status: string;
+  visible: boolean;
 }
 
 const AdminDashboard: React.FC = () => {
   const { userIsAdmin, isLoading } = useAdminRedirect();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
+  const [instrumentFilter, setInstrumentFilter] = useState('');
   const queryClient = useQueryClient();
 
-  // Fetch admin stats using React Query
+  // Fetch admin stats
   const { data: adminStats, isLoading: statsLoading, isError: statsError } = useQuery({
     queryKey: ['adminStats'],
     queryFn: getAdminStats,
     enabled: userIsAdmin,
   });
 
-  // Fetch reports using React Query
-  const { data: reports, isLoading: reportsLoading } = useQuery<AdminReport[]>({
-    queryKey: ['adminReports', selectedCategory],
-    queryFn: async () => {
-      const url = selectedCategory === 'all'
-        ? '/api/admin/reports'
-                : `/api/admin/reports?category=${selectedCategory}`;
-      const res = await fetch(url);
-      return res.json();
-    },
+  // Fetch report types
+  const { data: reportTypes, isLoading: typesLoading } = useQuery<string[]>({
+    queryKey: ['reportTypes'],
+    queryFn: getReportTypes,
     enabled: userIsAdmin,
   });
 
-  const toggleStatusMutation = useMutation({
-    mutationFn: (reportId: number) =>
-      fetch(`/api/admin/reports/${reportId}/toggle-status`, {
-        method: 'PUT',
-      }),
+  // Fetch admin reports
+  const { data: reports, isLoading: reportsLoading } = useQuery<AdminReport[]>({
+    queryKey: ['adminReports', selectedType, instrumentFilter],
+    queryFn: () => getAdminReports(selectedType === 'all' ? undefined : selectedType, instrumentFilter),
+    enabled: userIsAdmin,
+  });
+
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: (reportId: number) => toggleReportVisibility(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminReports', selectedCategory] });
+      queryClient.invalidateQueries({ queryKey: ['adminReports', selectedType, instrumentFilter] });
     },
   });
 
-  const handleToggleStatus = (reportId: number) => {
-    toggleStatusMutation.mutate(reportId);
+  const handleToggleVisibility = (reportId: number) => {
+    toggleVisibilityMutation.mutate(reportId);
   };
 
   if (isLoading || statsLoading) {
@@ -65,7 +66,6 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  // The hook will handle redirection, so we don't need a specific message here
   if (!userIsAdmin) {
     return null;
   }
@@ -86,7 +86,6 @@ const AdminDashboard: React.FC = () => {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* System Stats Card */}
         <div className="bg-purple-50 p-6 rounded-lg shadow-md border border-purple-200">
           <h3 className="text-xl font-semibold text-purple-800 mb-3">System Statistics</h3>
           <div className="space-y-2">
@@ -104,8 +103,6 @@ const AdminDashboard: React.FC = () => {
             </p>
           </div>
         </div>
-
-        {/* Management Card */}
         <div className="bg-gray-50 p-6 rounded-lg shadow-md border border-gray-200">
           <h3 className="text-xl font-semibold text-gray-800 mb-3">Management Tools</h3>
           <p className="text-gray-600">
@@ -119,23 +116,35 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Reports Management Section */}
       <div className="mt-8">
         <h3 className="text-2xl font-bold text-center text-gray-800 mb-6">Manage Reports</h3>
-        <div className="mb-4">
-          <label htmlFor="category-filter" className="block text-gray-700 text-sm font-bold mb-2">Filter by Category</label>
-          <select
-            id="category-filter"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-          >
-            <option value="all">All</option>
-            <option value="Phishing Website">Phishing Website</option>
-            <option value="Scam Email">Scam Email</option>
-            <option value="Fraudulent Phone Number">Fraudulent Phone Number</option>
-            <option value="Malware Distribution">Malware Distribution</option>
-          </select>
+        <div className="flex space-x-4 mb-4">
+          <div>
+            <label htmlFor="type-filter" className="block text-gray-700 text-sm font-bold mb-2">Filter by Type</label>
+            <select
+              id="type-filter"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={typesLoading}
+            >
+              <option value="all">All</option>
+              {reportTypes?.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="instrument-filter" className="block text-gray-700 text-sm font-bold mb-2">Filter by Instrument</label>
+            <input
+              id="instrument-filter"
+              type="text"
+              value={instrumentFilter}
+              onChange={(e) => setInstrumentFilter(e.target.value)}
+              placeholder="Enter instrument..."
+              className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
         {reportsLoading ? (
           <p>Loading reports...</p>
@@ -147,6 +156,7 @@ const AdminDashboard: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instrument</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visibility</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -156,13 +166,14 @@ const AdminDashboard: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">{report.instrument}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{report.type}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{report.status}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{report.visible ? 'Visible' : 'Hidden'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        onClick={() => handleToggleStatus(report.id)}
+                        onClick={() => handleToggleVisibility(report.id)}
                         className="text-blue-600 hover:text-blue-900"
-                        disabled={toggleStatusMutation.isPending}
+                        disabled={toggleVisibilityMutation.isPending}
                       >
-                        {toggleStatusMutation.isPending ? 'Toggling...' : 'Toggle Status'}
+                        {toggleVisibilityMutation.isPending ? 'Toggling...' : 'Toggle Visibility'}
                       </button>
                     </td>
                   </tr>

@@ -8,25 +8,24 @@ import * as z from 'zod';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import Modal from '@/components/common/Modal';
-import { reportThreat } from '@/api/reports';
+import { reportThreat, getReportTypes } from '@/api/reports';
 import { WatchlistCategory } from '@/types/auth';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
-import { THREAT_TYPES } from '@/constants/threatTypes';
 import { useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 
 // Define the Zod schema for validation
-const reportSchema = z.object({
+const reportSchema = (threatTypes: string[]) => z.object({
   instrument: z.string().min(1, 'Instrument is required'),
-  type: z.enum(THREAT_TYPES as [string, ...string[]], {
-    error: "Please select a valid threat type"
+  type: z.enum(threatTypes as [string, ...string[]], {
+    errorMap: () => ({ message: "Please select a valid threat type" })
   }),
   description: z.string().min(10, 'Description must be at least 10 characters').max(500, 'Description cannot exceed 500 characters'),
   aliases: z.string().optional(),
 });
 
 // Infer the type from the schema
-type ReportFormInputs = z.infer<typeof reportSchema>;
+type ReportFormInputs = z.infer<ReturnType<typeof reportSchema>>;
 
 interface Suggestion {
   id: number;
@@ -43,8 +42,21 @@ const ReportThreatForm: React.FC = () => {
   const [isExistingThreatModalOpen, setIsExistingThreatModalOpen] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [formData, setFormData] = useState<ReportFormInputs | null>(null);
+  const [threatTypes, setThreatTypes] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchThreatTypes = async () => {
+      try {
+        const types = await getReportTypes();
+        setThreatTypes(types);
+      } catch (error) {
+        console.error("Failed to fetch threat types:", error);
+      }
+    };
+    fetchThreatTypes();
+  }, []);
 
   const {
     register,
@@ -53,7 +65,7 @@ const ReportThreatForm: React.FC = () => {
     reset,
     setValue,
   } = useForm<ReportFormInputs>({
-    resolver: zodResolver(reportSchema),
+    resolver: zodResolver(reportSchema(threatTypes)),
   });
 
   useEffect(() => {
@@ -101,7 +113,6 @@ const ReportThreatForm: React.FC = () => {
 
   const onSubmit = (data: ReportFormInputs) => {
     setFormData(data);
-    // In a real app, you'd fetch from the DB to check for existence
     const existingThreat = suggestions.find(s => s.name === data.instrument);
     if (existingThreat) {
       setIsExistingThreatModalOpen(true);
@@ -187,9 +198,10 @@ const ReportThreatForm: React.FC = () => {
             {...register('type')}
             className={`shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200
             ${errors.type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
+            disabled={threatTypes.length === 0}
           >
             <option value="">-- Select a type --</option>
-            {THREAT_TYPES.map((type) => (
+            {threatTypes.map((type) => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>

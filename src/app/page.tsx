@@ -1,7 +1,25 @@
+"use client";
 // src/app/page.tsx
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { getReportStats } from "@/api/reports";
 
 export default function Home() {
+  const [stats, setStats] = useState({ totalThreats: 0, verifiedThreats: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getReportStats();
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch report stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-250px)] text-center px-4">
       <h2 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4 tracking-tight">
@@ -11,7 +29,6 @@ export default function Home() {
         Your community-driven platform for digital threat intelligence. Report, verify, and search for malicious entities.
       </p>
       <div className="mt-8">
-        {/* Placeholder for a relevant image or icon */}
         {/* Placeholder for a relevant image or icon */}
         <Image
           src="https://placehold.co/150x150/e0e7ff/3f51b5?text=Secure" // Placeholder image for security theme
@@ -25,11 +42,11 @@ export default function Home() {
       {/* Stats Section */}
       <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 text-center max-w-2xl">
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-          <h3 className="text-3xl font-bold text-blue-600">1,234</h3>
+          <h3 className="text-3xl font-bold text-blue-600">{stats.totalThreats}</h3>
           <p className="text-gray-500 mt-1">Total Threats Reported</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-          <h3 className="text-3xl font-bold text-green-600">567</h3>
+          <h3 className="text-3xl font-bold text-green-600">{stats.verifiedThreats}</h3>
           <p className="text-gray-500 mt-1">Verified Threats</p>
         </div>
       </div>
