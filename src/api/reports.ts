@@ -38,7 +38,7 @@ export const getReportStats = async () => {
 // Get report types
 export const getReportTypes = async (): Promise<string[]> => {
   const response = await apiClient.get('/reports/types');
-  return response.data.types;
+  return response.data.data;
 };
 
 // Get admin reports
@@ -47,7 +47,7 @@ export const getAdminReports = async (type?: string, instrument?: string) => {
   if (type) params.append('type', type);
   if (instrument) params.append('instrument', instrument);
   const response = await apiClient.get(`/reports/admin?${params.toString()}`);
-  return response.data;
+  return response.data.data;
 };
 
 // Toggle report visibility
