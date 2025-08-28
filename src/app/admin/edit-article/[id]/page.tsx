@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getArticleById } from '@/api/articles';
 import EditArticleForm from '@/components/admin/EditArticleForm';
 import { useAuthStore } from '@/store/authStore';
-import useAdminRedirect from '@/hooks/useAdminRedirect';
+import { useAdminRedirect } from '@/hooks/useAdminRedirect';
 
 const EditArticlePage = () => {
   const { id } = useParams();
