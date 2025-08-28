@@ -126,4 +126,5 @@ export interface AppealData {
 export interface GetReportsResponse {
   reports: Report[];
   totalCount: number;
+  message?: string;
 }

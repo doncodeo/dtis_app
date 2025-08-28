@@ -6,7 +6,7 @@ import { GetReportsResponse, WatchlistCategory } from '@/types/auth'; // Using a
 interface GetReportsParams {
   page?: number;
   limit?: number;
-  type?: string;
+  search?: string;
 }
 
 // Get all public reports

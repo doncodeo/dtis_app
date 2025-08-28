@@ -1,7 +1,7 @@
 // src/components/reports/ReportsTable.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getPublicReports, getReportTypes } from '@/api/reports';
 import { Report } from '@/types/auth';
@@ -26,6 +26,8 @@ const ReportsTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(Number(searchParams?.get('page') ?? 1));
   const [selectedType, setSelectedType] = useState(searchParams?.get('type') ?? 'all');
   const [searchTerm, setSearchTerm] = useState(searchParams?.get('search') ?? '');
+  const [inputValue, setInputValue] = useState(searchTerm);
+  const [message, setMessage] = useState<string | undefined>(undefined);
 
   // Fetch report types
   const { data: threatTypes, isLoading: typesLoading } = useQuery<string[]>({
@@ -36,14 +38,22 @@ const ReportsTable: React.FC = () => {
 
   // Fetch reports using React Query
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['reports', { page: currentPage, type: selectedType, search: searchTerm }],
+    queryKey: ['reports', { page: currentPage, search: searchTerm }],
     queryFn: () => getPublicReports({
       page: currentPage,
       limit: 10,
-      type: selectedType === 'all' ? undefined : selectedType,
+      search: searchTerm,
     }),
     staleTime: 1000 * 60, // Data considered fresh for 1 minute
   });
+
+  useEffect(() => {
+    if (data?.message) {
+      setMessage(data.message);
+    } else {
+      setMessage(undefined);
+    }
+  }, [data]);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -53,8 +63,17 @@ const ReportsTable: React.FC = () => {
   // Handle filter and search submission
   const handleFilterAndSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setSearchTerm(inputValue);
     setCurrentPage(1); // Reset to page 1 on new search/filter
   };
+
+  const filteredReports = useMemo(() => {
+    const reports = data?.reports || [];
+    if (selectedType === 'all') {
+      return reports;
+    }
+    return reports.filter((report) => report.type === selectedType);
+  }, [data, selectedType]);
 
   if (isLoading) {
     return (
@@ -77,8 +96,6 @@ const ReportsTable: React.FC = () => {
     );
   }
 
-  const reports = data?.reports || [];
-
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Public Threat Database</h2>
@@ -89,8 +106,8 @@ const ReportsTable: React.FC = () => {
           <input
             id="search"
             type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
             placeholder="e.g., example.com, 1-800-fake"
             className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -113,6 +130,12 @@ const ReportsTable: React.FC = () => {
         <Button type="submit" variant="primary">Search & Filter</Button>
       </form>
 
+      {message && (
+        <div className="mb-4 p-4 bg-blue-100 text-blue-800 rounded-lg">
+          {message}
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -132,8 +155,8 @@ const ReportsTable: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {reports.length ? (
-              reports.map((report: Report) => (
+            {filteredReports.length ? (
+              filteredReports.map((report: Report) => (
                 <tr key={report._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:underline cursor-pointer">
                     <Link href={`/reports/${report._id}`}>{report.instrument}</Link>
@@ -171,7 +194,7 @@ const ReportsTable: React.FC = () => {
         <span className="text-gray-600">Page {currentPage}</span>
         <Button
           onClick={() => handlePageChange(currentPage + 1)}
-          disabled={!reports.length}
+          disabled={!filteredReports.length}
           variant="secondary"
         >
           Next
