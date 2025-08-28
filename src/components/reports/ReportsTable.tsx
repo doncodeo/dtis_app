@@ -3,24 +3,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getPublicReports } from '@/api/reports';
-import { WatchlistCategory, Report } from '@/types/auth';
+import { getPublicReports, getReportTypes } from '@/api/reports';
+import { Report } from '@/types/auth';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/common/Button';
-
-// Hardcoded for now, but these would come from the backend or a shared constant
-const THREAT_TYPES: WatchlistCategory[] = [
-  "Phishing Website",
-  "Scam Email",
-  "Fraudulent Phone Number",
-  "Malware Distribution",
-  "Fake Tech Support",
-  "phone",
-  "email",
-  "business",
-  "website"
-];
 
 // Custom component to handle date formatting after hydration
 const ClientSideFormattedDate: React.FC<{ dateString: string }> = ({ dateString }) => {
@@ -39,6 +26,13 @@ const ReportsTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(Number(searchParams?.get('page') ?? 1));
   const [selectedType, setSelectedType] = useState(searchParams?.get('type') ?? 'all');
   const [searchTerm, setSearchTerm] = useState(searchParams?.get('search') ?? '');
+
+  // Fetch report types
+  const { data: threatTypes, isLoading: typesLoading } = useQuery<string[]>({
+    queryKey: ['reportTypes'],
+    queryFn: getReportTypes,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   // Fetch reports using React Query
   const { data, isLoading, isError, error } = useQuery({
@@ -60,10 +54,8 @@ const ReportsTable: React.FC = () => {
   const handleFilterAndSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1); // Reset to page 1 on new search/filter
-    // The queryKey update will trigger a new fetch.
   };
 
-  // Render content based on query state
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-10">
@@ -85,14 +77,12 @@ const ReportsTable: React.FC = () => {
     );
   }
 
-  // After confirming no loading or error, we can safely access data
   const reports = data?.reports || [];
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Public Threat Database</h2>
 
-      {/* Filter and Search Form */}
       <form onSubmit={handleFilterAndSearch} className="flex flex-wrap items-end gap-4 mb-8 p-4 bg-gray-50 rounded-lg shadow-inner">
         <div className="flex-1 min-w-[200px]">
           <label htmlFor="search" className="block text-gray-700 text-sm font-bold mb-2">Search Threat</label>
@@ -102,7 +92,7 @@ const ReportsTable: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="e.g., example.com, 1-800-fake"
-            className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+            className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div className="min-w-[150px]">
@@ -111,10 +101,11 @@ const ReportsTable: React.FC = () => {
             id="type-filter"
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+            className="shadow-sm border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={typesLoading}
           >
             <option value="all">All Types</option>
-            {THREAT_TYPES.map((type) => (
+            {threatTypes?.map((type) => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
@@ -122,7 +113,6 @@ const ReportsTable: React.FC = () => {
         <Button type="submit" variant="primary">Search & Filter</Button>
       </form>
 
-      {/* Reports Table/List */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -170,7 +160,6 @@ const ReportsTable: React.FC = () => {
         </table>
       </div>
 
-      {/* Pagination (basic example) */}
       <div className="flex justify-between items-center mt-6">
         <Button
           onClick={() => handlePageChange(currentPage - 1)}

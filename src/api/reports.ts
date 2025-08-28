@@ -28,3 +28,30 @@ export const reportThreat = async (data: NewReportData): Promise<string> => {
   const response = await apiClient.post('/reports', data);
   return response.data.message;
 };
+
+// Get report statistics
+export const getReportStats = async () => {
+  const response = await apiClient.get('/reports/stats/total');
+  return response.data.stats;
+};
+
+// Get report types
+export const getReportTypes = async (): Promise<string[]> => {
+  const response = await apiClient.get('/reports/types');
+  return response.data.types;
+};
+
+// Get admin reports
+export const getAdminReports = async (type?: string, instrument?: string) => {
+  const params = new URLSearchParams();
+  if (type) params.append('type', type);
+  if (instrument) params.append('instrument', instrument);
+  const response = await apiClient.get(`/reports/admin?${params.toString()}`);
+  return response.data;
+};
+
+// Toggle report visibility
+export const toggleReportVisibility = async (id: number) => {
+  const response = await apiClient.patch(`/admin/reports/${id}/visibility`);
+  return response.data;
+};
