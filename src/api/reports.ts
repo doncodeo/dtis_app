@@ -52,6 +52,6 @@ export const getAdminReports = async (type?: string, instrument?: string) => {
 
 // Toggle report visibility
 export const toggleReportVisibility = async (id: number) => {
-  const response = await apiClient.patch(`/admin/reports/${id}/visibility`);
+  const response = await apiClient.put(`/admin/reports/${id}/visibility`);
   return response.data;
 };
