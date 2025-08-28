@@ -2,9 +2,11 @@
 "use client";
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getArticleById } from '@/api/articles';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getArticleById, deleteArticle } from '@/api/articles';
 import Link from 'next/link';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
 
 interface ArticleDetailProps {
   id: string; // The article ID from the URL params
@@ -16,6 +18,24 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({ id }) => {
     queryFn: () => getArticleById(id),
     staleTime: 1000 * 60 * 5,
   });
+
+  const { user } = useAuthStore();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteArticle,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      router.push('/articles');
+    },
+  });
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this article?')) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -48,7 +68,23 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({ id }) => {
 
   return (
     <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg mt-8 mb-8">
-      <Link href="/articles" className="inline-block text-blue-600 hover:underline mb-4">&larr; Back to all articles</Link>
+        <div className="flex justify-between items-center mb-4">
+            <Link href="/articles" className="inline-block text-blue-600 hover:underline">&larr; Back to all articles</Link>
+            {user?.role === 'admin' && (
+                <div className="flex gap-2">
+                    <Link href={`/admin/edit-article/${id}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Edit
+                    </Link>
+                    <button
+                        onClick={handleDelete}
+                        disabled={deleteMutation.isPending}
+                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400"
+                    >
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                    </button>
+                </div>
+            )}
+        </div>
       <h1 className="text-4xl font-bold text-gray-800 mb-2">{article.title}</h1>
       <p className="text-sm text-gray-500 mb-6">
         By {article.author.name} on {new Date(article.createdAt).toLocaleDateString()}
