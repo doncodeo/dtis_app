@@ -1,30 +1,30 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateReport } from '@/api/reports';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { updateReport, getReportTypes } from '@/api/reports';
 import { useRouter } from 'next/navigation';
-
-interface Report {
-  _id: string;
-  instrument: string;
-  type: string;
-  description: string;
-}
+import { Report as ReportType, WatchlistCategory } from '@/types/auth';
 
 interface EditReportFormProps {
-  report: Report;
+  report: ReportType;
 }
 
 const EditReportForm: React.FC<EditReportFormProps> = ({ report }) => {
   const [instrument, setInstrument] = useState(report.instrument);
-  const [type, setType] = useState(report.type);
+  const [type, setType] = useState<WatchlistCategory>(report.type);
   const [description, setDescription] = useState(report.description);
+  const [aliases, setAliases] = useState(report.aliases?.join(', ') || '');
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  const { data: reportTypes, isLoading: typesLoading } = useQuery<string[]>({
+    queryKey: ['reportTypes'],
+    queryFn: getReportTypes,
+  });
+
   const updateMutation = useMutation({
-    mutationFn: (updatedReport: { instrument: string; type: string; description: string }) =>
+    mutationFn: (updatedReport: { instrument: string; type: WatchlistCategory; description: string; aliases?: string[] }) =>
       updateReport(parseInt(report._id), updatedReport),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
@@ -34,7 +34,8 @@ const EditReportForm: React.FC<EditReportFormProps> = ({ report }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate({ instrument, type, description });
+    const aliasesArray = aliases.split(',').map(alias => alias.trim()).filter(alias => alias);
+    updateMutation.mutate({ instrument, type, description, aliases: aliasesArray });
   };
 
   return (
@@ -55,13 +56,17 @@ const EditReportForm: React.FC<EditReportFormProps> = ({ report }) => {
         <label htmlFor="type" className="block text-sm font-medium text-gray-700">
           Type
         </label>
-        <input
-          type="text"
+        <select
           id="type"
           value={type}
-          onChange={(e) => setType(e.target.value)}
+          onChange={(e) => setType(e.target.value as WatchlistCategory)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
+          disabled={typesLoading}
+        >
+          {reportTypes?.map(reportType => (
+            <option key={reportType} value={reportType}>{reportType}</option>
+          ))}
+        </select>
       </div>
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700">
@@ -70,8 +75,20 @@ const EditReportForm: React.FC<EditReportFormProps> = ({ report }) => {
         <textarea
           id="description"
           value={description}
-          onChange={(e) => setDescription(e.targe.value)}
+          onChange={(e) => setDescription(e.target.value)}
           rows={4}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        />
+      </div>
+      <div>
+        <label htmlFor="aliases" className="block text-sm font-medium text-gray-700">
+          Aliases (comma-separated)
+        </label>
+        <input
+          type="text"
+          id="aliases"
+          value={aliases}
+          onChange={(e) => setAliases(e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         />
       </div>

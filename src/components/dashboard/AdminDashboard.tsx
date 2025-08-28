@@ -8,10 +8,14 @@ import { getAdminStats } from '@/api/admin';
 import { getReportTypes, getAdminReports, toggleReportVisibility, deleteReportByAdmin } from '@/api/reports';
 import Link from 'next/link';
 
+import { WatchlistCategory } from '@/types/auth';
+
 interface AdminReport {
   id: number;
   instrument: string;
-  type: string;
+  type: WatchlistCategory;
+  description: string;
+  aliases?: string[];
   status: string;
   visible: boolean;
 }
@@ -24,15 +28,17 @@ interface EditReportModalProps {
   report: AdminReport;
   onClose: () => void;
   onSuccess: () => void;
+  reportTypes: string[] | undefined;
 }
 
-const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSuccess }) => {
+const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSuccess, reportTypes }) => {
   const [instrument, setInstrument] = useState(report.instrument);
-  const [type, setType] = useState(report.type);
-  const queryClient = useQueryClient();
+  const [type, setType] = useState<WatchlistCategory>(report.type);
+  const [description, setDescription] = useState(report.description);
+  const [aliases, setAliases] = useState(report.aliases?.join(', ') || '');
 
   const updateMutation = useMutation({
-    mutationFn: (updatedReport: { instrument: string; type: string }) =>
+    mutationFn: (updatedReport: { instrument: string; type: WatchlistCategory; description: string; aliases?: string[] }) =>
       updateReportByAdmin(report.id, updatedReport),
     onSuccess: () => {
       onSuccess();
@@ -42,26 +48,58 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate({ instrument, type });
+    const aliasesArray = aliases.split(',').map(alias => alias.trim()).filter(alias => alias);
+    updateMutation.mutate({ instrument, type, description, aliases: aliasesArray });
   };
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <h3 className="text-lg font-medium leading-6 text-gray-900">Edit Report</h3>
-        <form onSubmit={handleSubmit} className="mt-2">
-          <input
-            type="text"
-            value={instrument}
-            onChange={(e) => setInstrument(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded mt-2"
-          />
-          <input
-            type="text"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded mt-2"
-          />
+        <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+          <div>
+            <label htmlFor="instrument" className="block text-sm font-medium text-gray-700">Instrument</label>
+            <input
+              type="text"
+              id="instrument"
+              value={instrument}
+              onChange={(e) => setInstrument(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
+            <select
+              id="type"
+              value={type}
+              onChange={(e) => setType(e.target.value as WatchlistCategory)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            >
+              {reportTypes?.map(reportType => (
+                <option key={reportType} value={reportType}>{reportType}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label htmlFor="aliases" className="block text-sm font-medium text-gray-700">Aliases (comma-separated)</label>
+            <input
+              type="text"
+              id="aliases"
+              value={aliases}
+              onChange={(e) => setAliases(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
           <div className="items-center px-4 py-3">
             <button
               type="submit"
@@ -285,6 +323,7 @@ const AdminDashboard: React.FC = () => {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['adminReports', selectedType, instrumentFilter] });
           }}
+          reportTypes={reportTypes}
         />
       )}
     </div>

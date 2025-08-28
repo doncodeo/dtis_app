@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { NextApiRequest } from 'next';
 
 // In-memory data store
-let reports = [
+const reports = [
   { id: 1, instrument: 'example.com', type: 'Phishing Website', description: 'A fake login page for a bank.', status: 'public', reviews: 5, userId: 'user1', createdAt: new Date() },
   { id: 2, instrument: 'scam@example.com', type: 'Scam Email', description: 'An email asking for money.', status: 'hidden', reviews: 2, userId: 'user2', createdAt: new Date() },
   { id: 3, instrument: '1-800-bad-guy', type: 'Fraudulent Phone Number', description: 'A fake tech support number.', status: 'public', reviews: 10, userId: 'user1', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) }, // 2 hours ago
@@ -17,7 +17,7 @@ const getUserId = (req: NextApiRequest) => {
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
   const body = await request.json();
-  const { instrument, type, description } = body;
+  const { instrument, type, description, aliases } = body;
 
   // In a real app, you would get the user ID from the session or token
   const userId = 'user1'; // Mocking user ID
@@ -42,7 +42,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: 'You can only edit your report within one hour of creation' }, { status: 403 });
   }
 
-  reports[reportIndex] = { ...report, instrument, type, description };
+  reports[reportIndex] = { ...report, instrument, type, description, aliases };
 
   return NextResponse.json(reports[reportIndex]);
 }
