@@ -144,7 +144,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
             <select
               id="verificationStatus"
               value={verificationStatus}
-              onChange={(e) => setVerificationStatus(e.target.value)}
+              onChange={(e) => setVerificationStatus(e.target.value as 'unverified' | 'verified')}
               className="w-full p-2 border border-gray-300 rounded mt-1 text-gray-900"
             >
               <option value="unverified">Unverified</option>
