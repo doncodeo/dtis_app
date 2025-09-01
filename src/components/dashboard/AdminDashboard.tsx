@@ -85,7 +85,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               id="instrument"
               value={instrument}
               onChange={(e) => setInstrument(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded mt-1"
+              className="w-full p-2 border border-gray-300 rounded mt-1 text-gray-900"
             />
           </div>
           {/* Type */}
@@ -95,7 +95,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               id="type"
               value={type}
               onChange={(e) => setType(e.target.value as WatchlistCategory)}
-              className="w-full p-2 border border-gray-300 rounded mt-1"
+              className="w-full p-2 border border-gray-300 rounded mt-1 text-gray-900"
             >
               {reportTypes?.map(reportType => (
                 <option key={reportType} value={reportType}>{reportType}</option>
@@ -110,7 +110,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full p-2 border border-gray-300 rounded mt-1"
+              className="w-full p-2 border border-gray-300 rounded mt-1 text-gray-900"
             />
           </div>
           {/* Aliases */}
@@ -121,7 +121,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               id="aliases"
               value={aliases}
               onChange={(e) => setAliases(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded mt-1"
+              className="w-full p-2 border border-gray-300 rounded mt-1 text-gray-900"
             />
           </div>
           {/* Risk Level */}
@@ -131,7 +131,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               id="riskLevel"
               value={riskLevel}
               onChange={(e) => setRiskLevel(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded mt-1"
+              className="w-full p-2 border border-gray-300 rounded mt-1 text-gray-900"
             >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
@@ -145,7 +145,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               id="verificationStatus"
               value={verificationStatus}
               onChange={(e) => setVerificationStatus(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded mt-1"
+              className="w-full p-2 border border-gray-300 rounded mt-1 text-gray-900"
             >
               <option value="unverified">Unverified</option>
               <option value="verified">Verified</option>
@@ -351,20 +351,30 @@ const AdminDashboard: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instrument</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visibility</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Instrument</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Risk Level</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Visibility</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {reports?.map((report: AdminReport) => (
                   <tr key={report.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{report.instrument}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{report.type}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{report.status}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{report.visible ? 'Visible' : 'Hidden'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-800">{report.instrument}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-800">{report.type}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-800">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        report.riskLevel === 'high' ? 'bg-red-100 text-red-800' :
+                        report.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {report.riskLevel}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-800">{report.status}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-800">{report.visible ? 'Visible' : 'Hidden'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => setEditingReport(report)}
