@@ -64,7 +64,7 @@ interface UserUpdateReportData {
 }
 
 // Interface for updating a report by an admin
-interface AdminUpdateReportData {
+export interface AdminUpdateReportData {
   instrument?: string;
   type?: WatchlistCategory;
   description?: string;

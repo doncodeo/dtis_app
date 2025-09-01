@@ -150,8 +150,8 @@ const ReportsTable: React.FC = () => {
       </form>
 
       {message && (
-        <div className="mb-4 p-4 bg-blue-100 text-blue-800 rounded-lg">
-          {message}
+        <div className="mb-4 p-4 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg text-center">
+          <p className="font-semibold">{message}</p>
         </div>
       )}
 
@@ -159,49 +159,49 @@ const ReportsTable: React.FC = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Instrument
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Type
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Description
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Reported
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-
             {reports.length > 0 ? (
               reports.map((report: Report) => (
                 <tr key={report._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:underline cursor-pointer">
                     <Link href={`/reports/${report._id}`}>{report.instrument}</Link>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                     {report.type}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                  <td className="px-6 py-4 text-sm text-gray-800 max-w-xs truncate">
                     {report.description}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                     <ClientSideFormattedDate dateString={report.createdAt} />
                   </td>
                 </tr>
               ))
-
             ) : (
-              <tr>
-                <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                  No reports found.
-                </td>
-              </tr>
+              !message && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                    No reports found.
+                  </td>
+                </tr>
+              )
             )}
           </tbody>
         </table>
