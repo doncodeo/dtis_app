@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from 'next/link';
 import { useEffect, useState } from "react";
 import { getReportStats } from "@/api/reports";
-import LatestNews from "@/components/articles/LatestNews";
+import LatestNews from "../components/articles/LatestNews"; // Using relative path
 
 export default function Home() {
   const [stats, setStats] = useState({ totalThreats: 0, verifiedThreats: 0 });
