@@ -24,8 +24,8 @@ const EditReportForm: React.FC<EditReportFormProps> = ({ report }) => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (updatedReport: { instrument: string; type: WatchlistCategory; description: string; aliases?: string[] }) =>
-      updateReport(parseInt(report._id), updatedReport),
+    mutationFn: (updatedReport: { description: string; aliases?: string[] }) =>
+      updateReport(report._id, updatedReport),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       router.push('/reports');
@@ -35,7 +35,7 @@ const EditReportForm: React.FC<EditReportFormProps> = ({ report }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const aliasesArray = aliases.split(',').map(alias => alias.trim()).filter(alias => alias);
-    updateMutation.mutate({ instrument, type, description, aliases: aliasesArray });
+    updateMutation.mutate({ description, aliases: aliasesArray });
   };
 
   return (
@@ -48,8 +48,8 @@ const EditReportForm: React.FC<EditReportFormProps> = ({ report }) => {
           type="text"
           id="instrument"
           value={instrument}
-          onChange={(e) => setInstrument(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          readOnly
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 sm:text-sm"
         />
       </div>
       <div>
@@ -59,13 +59,10 @@ const EditReportForm: React.FC<EditReportFormProps> = ({ report }) => {
         <select
           id="type"
           value={type}
-          onChange={(e) => setType(e.target.value as WatchlistCategory)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          disabled={typesLoading}
+          disabled
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 sm:text-sm"
         >
-          {reportTypes?.map(reportType => (
-            <option key={reportType} value={reportType}>{reportType}</option>
-          ))}
+          <option value={type}>{type}</option>
         </select>
       </div>
       <div>

@@ -1,9 +1,9 @@
 // src/components/reports/ReportsTable.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getPublicReports, getReportTypes } from '@/api/reports';
+import { getPublicReports, getReportTypes, getReportStats } from '@/api/reports';
 import { Report } from '@/types/auth';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -36,16 +36,25 @@ const ReportsTable: React.FC = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  // Fetch report statistics
+  const { data: statsData } = useQuery({
+    queryKey: ['reportStats'],
+    queryFn: getReportStats,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
   // Fetch reports using React Query
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['reports', { page: currentPage, search: searchTerm }],
+    queryKey: ['reports', { page: currentPage, type: selectedType, instrument: searchTerm }],
     queryFn: () => getPublicReports({
       page: currentPage,
       limit: 10,
-      search: searchTerm,
+      instrument: searchTerm,
+      type: selectedType === 'all' ? undefined : selectedType,
     }),
     staleTime: 1000 * 60, // Data considered fresh for 1 minute
   });
+  const reports = data?.reports || [];
 
   useEffect(() => {
     if (data?.message) {
@@ -66,14 +75,6 @@ const ReportsTable: React.FC = () => {
     setSearchTerm(inputValue);
     setCurrentPage(1); // Reset to page 1 on new search/filter
   };
-
-  const filteredReports = useMemo(() => {
-    const reports = data?.reports || [];
-    if (selectedType === 'all') {
-      return reports;
-    }
-    return reports.filter((report) => report.type === selectedType);
-  }, [data, selectedType]);
 
   if (isLoading) {
     return (
@@ -98,7 +99,25 @@ const ReportsTable: React.FC = () => {
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg">
-      <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Public Threat Database</h2>
+      <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">Public Threat Database</h2>
+
+      <div className="text-center mb-8">
+        <p className="text-gray-600">
+          Tracking malicious digital entities to safeguard the community.
+        </p>
+        {statsData && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
+            <div className="bg-blue-50 p-4 rounded-lg shadow-md border border-blue-200">
+              <p className="text-2xl font-bold text-blue-600">{statsData.totalThreats.toLocaleString()}</p>
+              <p className="text-sm text-blue-800">Total Threats Reported</p>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg shadow-md border border-green-200">
+              <p className="text-2xl font-bold text-green-600">{statsData.verifiedThreats.toLocaleString()}</p>
+              <p className="text-sm text-green-800">Verified Threats</p>
+            </div>
+          </div>
+        )}
+      </div>
 
       <form onSubmit={handleFilterAndSearch} className="flex flex-wrap items-end gap-4 mb-8 p-4 bg-gray-50 rounded-lg shadow-inner">
         <div className="flex-1 min-w-[200px]">
@@ -159,8 +178,8 @@ const ReportsTable: React.FC = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
 
-            {filteredReports.length ? (
-              filteredReports.map((report: Report) => (
+            {reports.length > 0 ? (
+              reports.map((report: Report) => (
                 <tr key={report._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:underline cursor-pointer">
                     <Link href={`/reports/${report._id}`}>{report.instrument}</Link>
@@ -179,7 +198,7 @@ const ReportsTable: React.FC = () => {
 
             ) : (
               <tr>
-                <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
                   No reports found.
                 </td>
               </tr>
@@ -199,7 +218,7 @@ const ReportsTable: React.FC = () => {
         <span className="text-gray-600">Page {currentPage}</span>
         <Button
           onClick={() => handlePageChange(currentPage + 1)}
-          disabled={!filteredReports.length}
+          disabled={reports.length < 10}
           variant="secondary"
         >
           Next

@@ -6,7 +6,8 @@ import { GetReportsResponse, WatchlistCategory } from '@/types/auth'; // Using a
 interface GetReportsParams {
   page?: number;
   limit?: number;
-  search?: string;
+  instrument?: string;
+  type?: string;
 }
 
 // Get all public reports
@@ -56,21 +57,31 @@ export const toggleReportVisibility = async (id: number) => {
   return response.data;
 };
 
-// Interface for updating a report
-interface UpdateReportData {
-  instrument?: string;
-  type?: WatchlistCategory;
+// Interface for updating a report by a user
+interface UserUpdateReportData {
   description?: string;
   aliases?: string[];
 }
 
+// Interface for updating a report by an admin
+interface AdminUpdateReportData {
+  instrument?: string;
+  type?: WatchlistCategory;
+  description?: string;
+  aliases?: string[];
+  riskLevel?: 'low' | 'medium' | 'high';
+  isPublic?: boolean;
+  forcePublic?: boolean;
+  verificationStatus?: 'unverified' | 'verified';
+}
+
 // User updates their own report
-export const updateReport = async (id: number, data: UpdateReportData): Promise<void> => {
+export const updateReport = async (id: string, data: UserUpdateReportData): Promise<void> => {
   await apiClient.put(`/reports/${id}`, data);
 };
 
 // Admin updates a report
-export const updateReportByAdmin = async (id: number, data: UpdateReportData): Promise<void> => {
+export const updateReportByAdmin = async (id: number, data: AdminUpdateReportData): Promise<void> => {
   await apiClient.put(`/reports/admin/${id}`, data);
 };
 

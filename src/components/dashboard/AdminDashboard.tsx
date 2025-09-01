@@ -16,11 +16,16 @@ interface AdminReport {
   type: WatchlistCategory;
   description: string;
   aliases?: string[];
-  status: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  verificationStatus: 'unverified' | 'verified';
+  isPublic: boolean;
+  // Mapped from backend `status` and `visible` for consistency
+  status: 'unverified' | 'verified';
   visible: boolean;
 }
 
-import { updateReportByAdmin } from '@/api/reports';
+
+import { updateReportByAdmin, AdminUpdateReportData } from '@/api/reports';
 
 // ... (other imports)
 
@@ -36,9 +41,15 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
   const [type, setType] = useState<WatchlistCategory>(report.type);
   const [description, setDescription] = useState(report.description);
   const [aliases, setAliases] = useState(report.aliases?.join(', ') || '');
+  const [riskLevel, setRiskLevel] = useState(report.riskLevel || 'low');
+  const [verificationStatus, setVerificationStatus] = useState(report.status);
+  const [isPublic, setIsPublic] = useState(report.visible);
+  const [forcePublic, setForcePublic] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const updateMutation = useMutation({
-    mutationFn: (updatedReport: { instrument: string; type: WatchlistCategory; description: string; aliases?: string[] }) =>
+    mutationFn: (updatedReport: AdminUpdateReportData) =>
       updateReportByAdmin(report.id, updatedReport),
     onSuccess: () => {
       onSuccess();
@@ -49,14 +60,24 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const aliasesArray = aliases.split(',').map(alias => alias.trim()).filter(alias => alias);
-    updateMutation.mutate({ instrument, type, description, aliases: aliasesArray });
+    updateMutation.mutate({
+      instrument,
+      type,
+      description,
+      aliases: aliasesArray,
+      riskLevel: riskLevel as 'low' | 'medium' | 'high',
+      verificationStatus: verificationStatus as 'unverified' | 'verified',
+      isPublic,
+      forcePublic,
+    });
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <h3 className="text-lg font-medium leading-6 text-gray-900">Edit Report</h3>
-        <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-10 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+        <h3 className="text-xl font-bold leading-6 text-gray-900 mb-4">Edit Report</h3>
+        <form onSubmit={handleSubmit} className="mt-2 space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+          {/* Instrument */}
           <div>
             <label htmlFor="instrument" className="block text-sm font-medium text-gray-700">Instrument</label>
             <input
@@ -67,6 +88,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               className="w-full p-2 border border-gray-300 rounded mt-1"
             />
           </div>
+          {/* Type */}
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
             <select
@@ -80,6 +102,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               ))}
             </select>
           </div>
+          {/* Description */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
             <textarea
@@ -90,6 +113,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               className="w-full p-2 border border-gray-300 rounded mt-1"
             />
           </div>
+          {/* Aliases */}
           <div>
             <label htmlFor="aliases" className="block text-sm font-medium text-gray-700">Aliases (comma-separated)</label>
             <input
@@ -100,13 +124,67 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
               className="w-full p-2 border border-gray-300 rounded mt-1"
             />
           </div>
-          <div className="items-center px-4 py-3">
+          {/* Risk Level */}
+          <div>
+            <label htmlFor="riskLevel" className="block text-sm font-medium text-gray-700">Risk Level</label>
+            <select
+              id="riskLevel"
+              value={riskLevel}
+              onChange={(e) => setRiskLevel(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          {/* Verification Status */}
+          <div>
+            <label htmlFor="verificationStatus" className="block text-sm font-medium text-gray-700">Verification Status</label>
+            <select
+              id="verificationStatus"
+              value={verificationStatus}
+              onChange={(e) => setVerificationStatus(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            >
+              <option value="unverified">Unverified</option>
+              <option value="verified">Verified</option>
+            </select>
+          </div>
+          {/* isPublic Checkbox */}
+          <div className="flex items-center">
+            <input
+              id="isPublic"
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="isPublic" className="ml-2 block text-sm text-gray-900">
+              Is Public
+            </label>
+          </div>
+          {/* forcePublic Checkbox */}
+          <div className="flex items-center">
+            <input
+              id="forcePublic"
+              type="checkbox"
+              checked={forcePublic}
+              onChange={(e) => setForcePublic(e.target.checked)}
+              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="forcePublic" className="ml-2 block text-sm text-gray-900">
+              Force Public (override visibility constraints)
+            </label>
+          </div>
+
+          <div className="items-center pt-4">
             <button
               type="submit"
               className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={updateMutation.isPending}
             >
-              {updateMutation.isPending ? 'Updating...' : 'Update'}
+              {updateMutation.isPending ? 'Updating...' : 'Update Report'}
             </button>
             <button
               type="button"
