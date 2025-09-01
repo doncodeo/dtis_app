@@ -28,6 +28,7 @@ const ReportsTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams?.get('search') ?? '');
   const [inputValue, setInputValue] = useState(searchTerm);
   const [message, setMessage] = useState<string | undefined>(undefined);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Fetch report types
   const { data: threatTypes, isLoading: typesLoading } = useQuery<string[]>({
@@ -53,6 +54,9 @@ const ReportsTable: React.FC = () => {
       type: selectedType === 'all' ? undefined : selectedType,
     }),
     staleTime: 1000 * 60, // Data considered fresh for 1 minute
+    onSettled: () => {
+      setIsSearching(false);
+    }
   });
   const reports = data?.reports || [];
 
@@ -72,11 +76,14 @@ const ReportsTable: React.FC = () => {
   // Handle filter and search submission
   const handleFilterAndSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSearching(true);
     setSearchTerm(inputValue);
     setCurrentPage(1); // Reset to page 1 on new search/filter
   };
 
-  if (isLoading) {
+  const pageIsLoading = isLoading && !isSearching;
+
+  if (pageIsLoading) {
     return (
       <div className="flex justify-center items-center py-10">
         <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -146,7 +153,9 @@ const ReportsTable: React.FC = () => {
             ))}
           </select>
         </div>
-        <Button type="submit" variant="primary">Search & Filter</Button>
+        <Button type="submit" variant="primary" isLoading={isSearching} loadingType="scan">
+          Search & Filter
+        </Button>
       </form>
 
       {message && (
@@ -164,6 +173,9 @@ const ReportsTable: React.FC = () => {
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Type
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Risk Level
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Description
@@ -185,6 +197,15 @@ const ReportsTable: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                     {report.type}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      report.riskLevel === 'high' ? 'bg-red-100 text-red-800' :
+                      report.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {report.riskLevel}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-800 max-w-xs truncate">
                     {report.description}

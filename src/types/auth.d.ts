@@ -104,6 +104,7 @@ export interface Report {
   description: string;
   aliases?: string[];
   reporterId: string;
+  riskLevel: 'low' | 'medium' | 'high';
   status: 'pending' | 'verified' | 'rejected'; // Status of the report
   createdAt: string;
   updatedAt: string;
