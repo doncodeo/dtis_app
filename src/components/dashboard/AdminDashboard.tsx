@@ -130,8 +130,8 @@ const EditReportModal: React.FC<EditReportModalProps> = ({ report, onClose, onSu
             <select
               id="riskLevel"
               value={riskLevel}
-              onChange={(e) => setRiskLevel(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded mt-1 text-gray-900"
+              onChange={(e) => setRiskLevel(e.target.value as 'low' | 'medium' | 'high')}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
             >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
