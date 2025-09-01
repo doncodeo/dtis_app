@@ -28,7 +28,7 @@ const ReportsTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams?.get('search') ?? '');
   const [inputValue, setInputValue] = useState(searchTerm);
   const [message, setMessage] = useState<string | undefined>(undefined);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchClicked, setIsSearchClicked] = useState(false);
 
   // Fetch report types
   const { data: threatTypes, isLoading: typesLoading } = useQuery<string[]>({
@@ -45,7 +45,7 @@ const ReportsTable: React.FC = () => {
   });
 
   // Fetch reports using React Query
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isFetching, isError, error } = useQuery({
     queryKey: ['reports', { page: currentPage, type: selectedType, instrument: searchTerm }],
     queryFn: () => getPublicReports({
       page: currentPage,
@@ -54,11 +54,14 @@ const ReportsTable: React.FC = () => {
       type: selectedType === 'all' ? undefined : selectedType,
     }),
     staleTime: 1000 * 60, // Data considered fresh for 1 minute
-    onSettled: () => {
-      setIsSearching(false);
-    }
   });
   const reports = data?.reports || [];
+
+  useEffect(() => {
+    if (!isFetching) {
+      setIsSearchClicked(false);
+    }
+  }, [isFetching]);
 
   useEffect(() => {
     if (data?.message) {
@@ -76,14 +79,12 @@ const ReportsTable: React.FC = () => {
   // Handle filter and search submission
   const handleFilterAndSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSearching(true);
+    setIsSearchClicked(true);
     setSearchTerm(inputValue);
     setCurrentPage(1); // Reset to page 1 on new search/filter
   };
 
-  const pageIsLoading = isLoading && !isSearching;
-
-  if (pageIsLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-10">
         <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -153,7 +154,7 @@ const ReportsTable: React.FC = () => {
             ))}
           </select>
         </div>
-        <Button type="submit" variant="primary" isLoading={isSearching} loadingType="scan">
+        <Button type="submit" variant="primary" isLoading={isFetching && isSearchClicked} loadingType="scan">
           Search & Filter
         </Button>
       </form>

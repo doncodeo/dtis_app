@@ -17,9 +17,6 @@ interface AdminReport {
   description: string;
   aliases?: string[];
   riskLevel: 'low' | 'medium' | 'high';
-  verificationStatus: 'unverified' | 'verified';
-  isPublic: boolean;
-  // Mapped from backend `status` and `visible` for consistency
   status: 'unverified' | 'verified';
   visible: boolean;
 }
@@ -354,7 +351,7 @@ const AdminDashboard: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Instrument</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Risk Level</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Verification Status</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Visibility</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -373,7 +370,13 @@ const AdminDashboard: React.FC = () => {
                         {report.riskLevel}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-800">{report.status}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-800">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        report.status === 'verified' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {report.status}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-800">{report.visible ? 'Visible' : 'Hidden'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
