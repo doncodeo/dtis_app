@@ -1,8 +1,10 @@
 "use client";
 // src/app/page.tsx
 import Image from "next/image";
+import Link from 'next/link';
 import { useEffect, useState } from "react";
 import { getReportStats } from "@/api/reports";
+import LatestNews from "@/components/articles/LatestNews";
 
 export default function Home() {
   const [stats, setStats] = useState({ totalThreats: 0, verifiedThreats: 0 });
@@ -21,47 +23,94 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-250px)] text-center px-4">
-      <h2 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4 tracking-tight">
-        Welcome to DTIS!
-      </h2>
-      <p className="text-lg md:text-xl text-gray-600 max-w-2xl leading-relaxed">
-        Your community-driven platform for digital threat intelligence. Report, verify, and search for malicious entities.
-      </p>
-      <div className="mt-8">
-        {/* Placeholder for a relevant image or icon */}
-        <Image
-          src="https://placehold.co/150x150/e0e7ff/3f51b5?text=Secure" // Placeholder image for security theme
-          alt="Security Icon"
-          width={150}
-          height={150}
-          className="rounded-full shadow-lg"
-        />
-      </div>
+    <div className="bg-white text-gray-800">
+      {/* Hero Section */}
+      <section className="text-center py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <Image
+            src="/globe.svg"
+            alt="Global Security"
+            width={120}
+            height={120}
+            className="mx-auto mb-6"
+          />
+          <h1 className="text-5xl font-extrabold mb-4 text-gray-900">
+            Secure Your Digital World
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Your trusted source for community-driven threat intelligence. Report, verify, and stay ahead of digital threats with confidence.
+          </p>
+          <div className="mt-10 flex justify-center gap-4">
+            <Link href="/report-threat" className="px-8 py-4 bg-blue-600 text-white font-bold rounded-full shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
+              Report a Threat
+            </Link>
+            <Link href="/reports" className="px-8 py-4 bg-gray-200 text-gray-800 font-bold rounded-full shadow-md hover:bg-gray-300 transition-transform transform hover:scale-105">
+              View Threat Reports
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">Why Trust DTIS?</h2>
+            <p className="text-lg text-gray-600 mt-2">
+              We are built on principles of transparency, verification, and community collaboration.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-10 text-center">
+            <div className="p-8 bg-gray-50 rounded-xl shadow-md">
+              <h3 className="text-2xl font-semibold mb-3">Community-Powered</h3>
+              <p className="text-gray-600">
+                Leverage a global network of users to identify and report emerging threats faster than ever before.
+              </p>
+            </div>
+            <div className="p-8 bg-gray-50 rounded-xl shadow-md">
+              <h3 className="text-2xl font-semibold mb-3">Verified Intelligence</h3>
+              <p className="text-gray-600">
+                Our dedicated team and robust processes ensure that all threat reports are thoroughly vetted and verified.
+              </p>
+            </div>
+            <div className="p-8 bg-gray-50 rounded-xl shadow-md">
+              <h3 className="text-2xl font-semibold mb-3">Open & Transparent</h3>
+              <p className="text-gray-600">
+                Access a comprehensive and searchable database of digital threats to protect your assets proactively.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Stats Section */}
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 text-center max-w-2xl">
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-          <h3 className="text-3xl font-bold text-blue-600">{stats.totalThreats}</h3>
-          <p className="text-gray-500 mt-1">Total Threats Reported</p>
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-center max-w-3xl mx-auto">
+            <div className="bg-gray-50 p-8 rounded-xl shadow-md">
+              <h3 className="text-4xl font-bold text-blue-600">{stats.totalThreats}</h3>
+              <p className="text-gray-600 mt-2 text-lg">Total Threats Reported</p>
+            </div>
+            <div className="bg-gray-50 p-8 rounded-xl shadow-md">
+              <h3 className="text-4xl font-bold text-green-600">{stats.verifiedThreats}</h3>
+              <p className="text-gray-600 mt-2 text-lg">Verified Threats</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-          <h3 className="text-3xl font-bold text-green-600">{stats.verifiedThreats}</h3>
-          <p className="text-gray-500 mt-1">Verified Threats</p>
-        </div>
-      </div>
+      </section>
 
-      <div className="mt-10 flex flex-wrap justify-center gap-4">
-        <a href="/report-threat" className="px-8 py-4 bg-red-600 text-white font-bold rounded-full shadow-lg hover:bg-red-700 transition-transform transform hover:scale-105">
-          Report a Threat
-        </a>
-        <a href="/reports" className="px-8 py-4 bg-blue-600 text-white font-bold rounded-full shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
-          View Threats
-        </a>
-        <a href="/auth/register" className="px-8 py-4 border-2 border-blue-600 text-blue-600 font-bold rounded-full shadow-lg hover:bg-blue-50 transition-transform transform hover:scale-105">
-          Join Us
-        </a>
-      </div>
+      {/* Latest News Section */}
+      <section className="bg-gray-50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">Latest News & Updates</h2>
+            <p className="text-lg text-gray-600 mt-2">
+              Stay informed with the latest in cybersecurity.
+            </p>
+          </div>
+          <LatestNews />
+        </div>
+      </section>
     </div>
   );
 }
